@@ -1,32 +1,35 @@
-const multer = require('multer');
 
-// Multer configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/') // Destination folder for uploaded files
-  },
-  filename: function (req, file, cb) {
-    // Use current date/time to ensure unique filenames
-    cb(null, Date.now() + '-' + file.originalname)
-  }
+const fs = require('fs');
+const path = require('path');
+const cloudinary = require('cloudinary').v2;
+
+
+          
+cloudinary.config({ 
+  cloud_name: 'djs1irzcn', 
+  api_key: '437148446323912', 
+  api_secret: 'nuL-ENxCTtMdtD6_HtrslwJotGY' 
 });
 
-const upload = multer({ storage: storage }).single('image'); // 'image' is the name of the field in the form
-
-// Controller function to handle image upload
-const uploadImage = (req, res) => {
-  upload(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      // A Multer error occurred when uploading
-      return res.status(500).json({ error: err.message });
-    } else if (err) {
-      // An unknown error occurred when uploading
-      return res.status(500).json({ error: 'An unknown error occurred' });
+const uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Upload file to Cloudinary
+    const response = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "auto"
+    });
+
     // File uploaded successfully
-    return res.status(200).json({ message: 'File uploaded successfully', filename: req.file.filename });
-  });
+    console.log("File uploaded successfully", response.url);
+    fs.unlinkSync(req.file.path); 
+    res.status(200).json({ url: response.url });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
 module.exports = { uploadImage };

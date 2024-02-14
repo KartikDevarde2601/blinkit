@@ -1,9 +1,9 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const keys=require('./keys')
 
 exports.connect = async () => {
   try {
-    await mongoose.connect(keys.mongoURI, {
+    await mongoose.connect(process.env.mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
